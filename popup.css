@@ -1,15 +1,3 @@
-/* General styles */
-/* body {
-  font-family: "Roboto", Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f4fcff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-} */
-
 .container {
   font-family: "Roboto", Arial, sans-serif;
   width: 350px;

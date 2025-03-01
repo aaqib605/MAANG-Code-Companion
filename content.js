@@ -113,8 +113,8 @@ function makeElementDraggable(element) {
     initialX = e.clientX;
     initialY = e.clientY;
 
-    element.addEventListener("mousemove", dragElement);
-    element.addEventListener("mouseup", stopDrag);
+    document.addEventListener("mousemove", dragElement);
+    document.addEventListener("mouseup", stopDrag);
   }
 
   function dragElement(e) {
@@ -132,8 +132,8 @@ function makeElementDraggable(element) {
   }
 
   function stopDrag() {
-    element.removeEventListener("mousemove", dragElement);
-    element.removeEventListener("mouseup", stopDrag);
+    document.removeEventListener("mousemove", dragElement);
+    document.removeEventListener("mouseup", stopDrag);
   }
 
   element.style.resize = "both";
