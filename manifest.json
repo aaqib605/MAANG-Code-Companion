@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "MAANG Code Companion",
+  "version": "0.1",
+  "author": "Aaqib Javaid",
+  "description": "A Chrome Extension that provides AI assistance related to coding problems on maang.in",
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "declarativeContent"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/ai-help.png",
+        "assets/download.png",
+        "assets/copy.png",
+        "assets/download_white.png",
+        "assets/ai-help-white.png"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "assets/ext-icon.png",
+      "24": "assets/ext-icon.png",
+      "32": "assets/ext-icon.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "AI Help Extension"
+  }
+}
