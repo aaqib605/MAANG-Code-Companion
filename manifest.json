@@ -27,7 +27,8 @@
         "assets/download.png",
         "assets/copy.png",
         "assets/download_white.png",
-        "assets/ai-help-white.png"
+        "assets/ai-help-white.png",
+        "inject.js"
       ],
       "matches": ["<all_urls>"]
     }

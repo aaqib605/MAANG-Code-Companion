@@ -1,4 +1,49 @@
 const aiHelpImgURL = chrome.runtime.getURL("assets/ai-help-white.png");
+const extractedDetails = {
+  id: "",
+  name: "",
+  description: "",
+  input: "",
+  output: "",
+  constraints: "",
+  hints: [],
+  solutionApproach: "",
+  editorialCode: [],
+  problemId: "",
+};
+
+const script = document.createElement("script");
+script.src = chrome.runtime.getURL("inject.js");
+(document.head || document.documentElement).appendChild(script);
+script.onload = function () {
+  script.remove();
+};
+
+window.addEventListener("message", function (event) {
+  if (event.source !== window) return;
+
+  if (event.data.type && event.data.type === "EXTRACTED_DATA") {
+    const extractedData = event.data.data;
+
+    handleExtractedData(extractedData);
+  }
+});
+
+function handleExtractedData(data) {
+  // Extract individual hints and solution approach
+  const hints = [];
+
+  for (const key in data.hints) {
+    if (key.startsWith("hint")) {
+      hints.push(data.hints[key]);
+    }
+  }
+
+  extractedDetails.problemId = data.id;
+  extractedDetails.hints = hints;
+  extractedDetails.solutionApproach = data.hints.solution_approach || "";
+  extractedDetails.editorialCode = data.editorialCode;
+}
 
 addAIHelpButton();
 
