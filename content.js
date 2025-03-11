@@ -1,16 +1,4 @@
 const aiHelpImgURL = chrome.runtime.getURL("assets/ai-help-white.png");
-const extractedDetails = {
-  id: "",
-  name: "",
-  description: "",
-  input: "",
-  output: "",
-  constraints: "",
-  hints: [],
-  solutionApproach: "",
-  editorialCode: [],
-  problemId: "",
-};
 
 const script = document.createElement("script");
 script.src = chrome.runtime.getURL("inject.js");
@@ -25,25 +13,9 @@ window.addEventListener("message", function (event) {
   if (event.data.type && event.data.type === "EXTRACTED_DATA") {
     const extractedData = event.data.data;
 
-    handleExtractedData(extractedData);
+    console.log(extractedData);
   }
 });
-
-function handleExtractedData(data) {
-  // Extract individual hints and solution approach
-  const hints = [];
-
-  for (const key in data.hints) {
-    if (key.startsWith("hint")) {
-      hints.push(data.hints[key]);
-    }
-  }
-
-  extractedDetails.problemId = data.id;
-  extractedDetails.hints = hints;
-  extractedDetails.solutionApproach = data.hints.solution_approach || "";
-  extractedDetails.editorialCode = data.editorialCode;
-}
 
 addAIHelpButton();
 
@@ -96,6 +68,8 @@ function openAIChatBox() {
   let chatHeaderColor = "#2b384e";
   let sendButtonColor = "#2b384e";
   let textColor = "white";
+  let userMessageColor = "#d8d8d8";
+  let aiMessageColor = "#fff";
   let inputBoxColor = "#2b384e";
   let chatBoxBackgroundColor = "#1e2736";
 
@@ -124,13 +98,48 @@ function openAIChatBox() {
             <button id="send-button" style="padding: 10px; background-color:${sendButtonColor}; color: ${textColor}; border: none; border-radius: 5px; cursor: pointer;">Send</button>
         </div>
     `;
+
   document.body.appendChild(chatBox);
+
+  document
+    .getElementById("send-button")
+    .addEventListener("click", () =>
+      sendMessage(aiMessageColor, userMessageColor)
+    );
 
   document
     .getElementById("close-chat-box")
     .addEventListener("click", closeAIChatBox);
 
   makeElementDraggable(chatBox);
+}
+
+async function sendMessage(aiMessageColor, userMessageColor) {
+  const input = document.getElementById("chat-input").value;
+  const chatBody = document.getElementById("chat-body");
+
+  if (input.trim() === "") return;
+
+  chatBody.innerHTML += `<div class="user-message" style="text-align: right; color: ${userMessageColor}; margin: 5px;">${input}</div>`;
+
+  document.getElementById("chat-input").value = "";
+
+  const combinedPrompt = `
+            Respond briefly to the following:
+            ${input}
+        `;
+
+  const response = await getAIResponse(combinedPrompt);
+
+  const aiMessageDiv = document.createElement("div");
+  aiMessageDiv.className = "ai-message";
+  aiMessageDiv.style.textAlign = "left";
+  aiMessageDiv.style.color = aiMessageColor;
+  aiMessageDiv.style.margin = "5px";
+
+  aiMessageDiv.innerHTML = response;
+
+  chatBody.appendChild(aiMessageDiv);
 }
 
 function closeAIChatBox() {
@@ -183,4 +192,28 @@ function makeElementDraggable(element) {
 
   element.style.resize = "both";
   element.style.overflow = "auto";
+}
+
+async function getAIResponse(input) {
+  return new Promise((resolve, reject) => {
+    const port = chrome.runtime.connect({ name: "aiHelpPort" });
+    port.postMessage({ action: "getAIResponse", message: input });
+
+    port.onMessage.addListener((response) => {
+      if (response && response.response) {
+        resolve(response.response);
+      } else {
+        reject("No valid response received from background script.");
+      }
+
+      port.disconnect();
+    });
+
+    port.onDisconnect.addListener(() => {
+      if (chrome.runtime.lastError) {
+        console.error("Runtime error:", chrome.runtime.lastError.message);
+        reject("Failed to communicate with background script.");
+      }
+    });
+  });
 }
