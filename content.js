@@ -134,6 +134,46 @@ function openAIChatBox() {
     .addEventListener("click", closeAIChatBox);
 
   makeElementDraggable(chatBox);
+
+  getChatHistory(extractedDetails.id, (chatHistory) => {
+    loadChatHistory(chatHistory);
+  });
+}
+
+function getChatHistory(problemKey, callback) {
+  chrome.storage.local.get({ chatHistories: {} }, (result) => {
+    const allChatHistories = result.chatHistories;
+
+    const chatHistory = allChatHistories[problemKey] || [];
+
+    callback(chatHistory);
+  });
+}
+
+function loadChatHistory(chatHistory) {
+  const chatBody = document.getElementById("chat-body");
+
+  let aiMessageColor = "white";
+  let userMessageColor = "#d8d8d8";
+
+  chatHistory.forEach(({ sender, message }) => {
+    const messageColor = sender === "ai" ? aiMessageColor : userMessageColor;
+    const messageAlignment = sender === "ai" ? "left" : "right";
+
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `${sender}-message`;
+    messageDiv.style.textAlign = messageAlignment;
+    messageDiv.style.color = messageColor;
+    messageDiv.style.margin = "5px";
+
+    if (sender === "ai") {
+      messageDiv.innerHTML = marked.parse(message);
+    } else {
+      messageDiv.innerText = message;
+    }
+
+    chatBody.appendChild(messageDiv);
+  });
 }
 
 async function sendMessage(aiMessageColor, userMessageColor) {
@@ -145,6 +185,8 @@ async function sendMessage(aiMessageColor, userMessageColor) {
   chatBody.innerHTML += `<div class="user-message" style="text-align: right; color: ${userMessageColor}; margin: 5px;">${input}</div>`;
 
   document.getElementById("chat-input").value = "";
+
+  saveChatHistory(extractedDetails.id, input, "user");
 
   const combinedPrompt = `
         Please understand the context of the following problem:
@@ -170,15 +212,36 @@ async function sendMessage(aiMessageColor, userMessageColor) {
 
   const response = await getAIResponse(combinedPrompt);
 
+  saveChatHistory(extractedDetails.id, response, "ai");
+
   const aiMessageDiv = document.createElement("div");
   aiMessageDiv.className = "ai-message";
   aiMessageDiv.style.textAlign = "left";
   aiMessageDiv.style.color = aiMessageColor;
   aiMessageDiv.style.margin = "5px";
 
-  aiMessageDiv.innerHTML = response;
+  aiMessageDiv.innerHTML = marked.parse(response);
 
   chatBody.appendChild(aiMessageDiv);
+}
+
+function saveChatHistory(problemKey, message, sender) {
+  chrome.storage.local.get({ chatHistories: {} }, (result) => {
+    const allChatHistories = result.chatHistories;
+    console.log("All chat histories:", allChatHistories);
+
+    const chatHistory = allChatHistories[problemKey] || [];
+    console.log("Current chat history of problem before pushing", chatHistory);
+
+    chatHistory.push({ sender, message });
+    console.log("Current chat history of problem after pushing", chatHistory);
+
+    allChatHistories[problemKey] = chatHistory;
+
+    chrome.storage.local.set({ chatHistories: allChatHistories }, () => {
+      console.log("Chat history saved:", allChatHistories);
+    });
+  });
 }
 
 function closeAIChatBox() {
