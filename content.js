@@ -1,7 +1,6 @@
 const aiHelpImgURL = chrome.runtime.getURL("assets/ai-help-white.png");
 
 const extractedDetails = {
-  id: "",
   name: "",
   description: "",
   input: "",
@@ -11,6 +10,17 @@ const extractedDetails = {
   editorialCode: [],
   problemId: "",
 };
+
+const textObserver = new MutationObserver(() => {
+  const problemUrl = window.location.href;
+  const problemId = extractUniqueId(problemUrl);
+  extractedDetails.id = problemId;
+});
+
+textObserver.observe(
+  document.querySelector(".fw-bolder.problem_heading.fs-4"),
+  { childList: true, subtree: true, characterData: true }
+);
 
 const script = document.createElement("script");
 script.src = chrome.runtime.getURL("inject.js");
